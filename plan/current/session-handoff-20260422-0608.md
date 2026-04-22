@@ -24,7 +24,7 @@ All artifacts written:
 - `plan/current/operational-model.md`
 - `plan/current/slo-definitions.md`
 - `plan/current/cost-model.md`
-- `plan/current/mcp-servers.md` — supplementary reference for all 10 MCP servers
+- `plan/current/mcp-servers.md` — reference for all 11 MCP servers
 - `src/orchestrator/component.yml`
 - `src/obs/component.yml`
 - `src/mcp-reddit/component.yml`
@@ -45,6 +45,9 @@ All artifacts written:
 - ADR-010: Sticky model + keep_alive: 0 VRAM strategy
 - ADR-011: Variational execution with judge model
 - ADR-012: Per-branch JSON context sidecar
+
+### Post-P2 additions ✅
+- Obsidian MCP added (11th server) — bi-directional vault read/write for RESEARCH, VIABILITY_REVIEW, and human annotation loop; `OBSIDIAN_API_KEY` env var; requires Obsidian running with Local REST API plugin
 
 ---
 
@@ -81,7 +84,8 @@ Operator seeds swarm.db → Orchestrator (Go)
   ├── DAG Scheduler (2s poll)
   ├── Semantic Router → SKILL.md system prompt + Ollama model
   ├── Ollama Client (keep_alive: 0)
-  ├── MCP Client → 10 MCP servers (Brave, GitHub, context-mode, fetch, Wikipedia, HN, mcp-reddit, ArXiv, YouTube, Memory)
+  ├── MCP Client → 11 MCP servers (Brave, GitHub, context-mode, fetch, Wikipedia, HN,
+  │                                mcp-reddit, ArXiv, YouTube, Memory, Obsidian)
   ├── Variational Engine (3 candidates + judge)
   ├── Validator (go build + self-correction)
   └── Obs (DuckDB events + stdout log/slog)
@@ -92,9 +96,22 @@ skills/ — Agent Skills SKILL.md per task type
 ```
 
 **Components:** 3 (orchestrator Go, obs Go package, mcp-reddit TypeScript)
-**MCP servers:** 10 (9 third-party + 1 custom)
+**MCP servers:** 11 (10 third-party + 1 custom)
 **Task types:** 5 (DECOMPOSE, RESEARCH, GO_CODE, VIABILITY_REVIEW, SUMMARY)
 **Models:** phi-4:mini, llama3.1:8b, qwen2.5-coder:7b, smollm3:135m
+
+---
+
+## Credential Summary
+
+| Server | Env Var | Required |
+|---|---|---|
+| Brave Search | `BRAVE_API_KEY` | Yes |
+| GitHub MCP | `GITHUB_TOKEN` | Yes |
+| mcp-reddit | `REDDIT_CLIENT_ID` | Yes |
+| mcp-reddit | `REDDIT_CLIENT_SECRET` | Yes |
+| Obsidian MCP | `OBSIDIAN_API_KEY` | Yes (if Obsidian in use) |
+| All others | — | No |
 
 ---
 

@@ -31,6 +31,7 @@ version: "0.1.0"
 - Output artifact deposit to configurable project directory on terminal state
 - `prune-report.md` generation for fully pruned projects
 - Research-first task priority (DECOMPOSE → RESEARCH → VIABILITY_REVIEW primary flow)
+- Obsidian MCP: bi-directional vault read/write for RESEARCH findings, VIABILITY_REVIEW reports, and human annotation loop
 - Agent Skills (agentskills.io format) for all task-type system prompts — 5 custom skills in `skills/`
 - Official Anthropic skills bundled as reference: `mcp-builder`, `webapp-testing`
 - Skill-loader in orchestrator: parses SKILL.md frontmatter, injects body as Ollama system prompt on dispatch

@@ -18,7 +18,7 @@
   - Variational execution candidate count: 3
 - Integrations:
   - Ollama (local LLM inference)
-  - MCP tool layer (Brave Search, GitHub, context-mode, fetch, Wikipedia, Hacker News)
+  - MCP tool layer (Brave Search, GitHub, context-mode, fetch, Wikipedia, Hacker News, mcp-reddit, ArXiv, YouTube Transcript, Memory, Obsidian)
 
 ## Architecture Layer
 - Latency target: Scheduler poll interval ≤ 2 seconds for unblocked task pickup
@@ -70,6 +70,7 @@
 | ArXiv MCP | Academic and technical paper search + retrieval | none |
 | YouTube Transcript MCP | Pull transcripts from video content for research | none |
 | Memory MCP | Persistent knowledge graph across runs (complements per-branch JSON sidecar) | none |
+| Obsidian MCP | Read/write Obsidian vault notes; bi-directional Human on the Loop knowledge base | `OBSIDIAN_API_KEY` env var |
 
 ## Task Type → Model Routing
 
@@ -100,6 +101,7 @@ Bundled from [anthropics/skills](https://github.com/anthropics/skills) as refere
   - Go build validation + self-correction feedback loop
   - Sticky model strategy (minimise VRAM swap tax)
   - MCP tool layer with 10 registered servers
+  - MCP tool layer with 11 registered servers
   - Agent Skills (agentskills.io format): 5 custom task-type skills + 2 official Anthropic skills (`mcp-builder`, `webapp-testing`)
   - Skill-loader in orchestrator: reads SKILL.md, injects body as system prompt on task dispatch
   - Research-first task priority: DECOMPOSE → RESEARCH → VIABILITY_REVIEW is the primary flow; GO_CODE is secondary
