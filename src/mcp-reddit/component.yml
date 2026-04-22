@@ -1,0 +1,106 @@
+id: "mcp-reddit"
+name: "Reddit MCP Server"
+feature: "0000001-autonomous-local-swarm"
+version: "0.1.0"
+status: "planned"
+type: "microservice"
+domain: "swarm"
+summary: "TypeScript MCP server wrapping the Reddit OAuth API; exposes read-only search and retrieval tools with automatic rate-limit backoff."
+systemContext: "Runs as a standalone Node.js process. Registered by the orchestrator's MCP client at startup. Called by RESEARCH tasks to retrieve Reddit posts, comments, and community signals."
+
+responsibilities:
+  - "Authenticate with Reddit using app-only OAuth2 client_credentials grant"
+  - "Expose reddit_search, reddit_get_post, and reddit_hot MCP tools"
+  - "Pause and retry transparently on HTTP 429 using x-ratelimit-reset header"
+  - "Return error to caller on second consecutive 429 (no infinite loop)"
+  - "Ensure credentials never appear in tool responses, errors, or stderr"
+
+exceptions:
+  - "Does not support posting, voting, commenting, or any write operation"
+  - "Does not support user OAuth (read-only app credentials only)"
+  - "Does not paginate beyond a single response per tool call"
+  - "Does not cache responses"
+
+stack:
+  language: "typescript"
+  runtime: "node"
+  framework: "none"
+  frontend: "none"
+  styling: "none"
+  componentLibrary: "none"
+  database: "none"
+  orm: "none"
+  testing: "vitest"
+  iac: "none"
+  cloud: "none"
+  compute: "none"
+  ci: "none"
+
+contract:
+  apiSpec: "none"
+  inputs:
+    - name: "MCP stdio transport"
+      type: "http"
+      description: "Receives tool call requests from the orchestrator MCP client via MCP stdio protocol"
+  outputs:
+    - name: "reddit_search result"
+      type: "http"
+      description: "Returns matching Reddit posts as structured JSON"
+    - name: "reddit_get_post result"
+      type: "http"
+      description: "Returns post body and top comments as structured JSON"
+    - name: "reddit_hot result"
+      type: "http"
+      description: "Returns hot posts from a subreddit as structured JSON"
+  consumedBy:
+    - "orchestrator"
+  consumes: []
+  breakingChangePolicy: "requires-human-approval"
+
+data:
+  ownsData: false
+
+scope:
+  inScope:
+    - "reddit_search tool"
+    - "reddit_get_post tool"
+    - "reddit_hot tool"
+    - "App-only OAuth2 authentication"
+    - "HTTP 429 backoff with single retry"
+    - "Credential isolation"
+  outOfScope:
+    - "Write operations (post, vote, comment)"
+    - "User authentication"
+    - "Response caching"
+    - "Multi-page pagination"
+  deferred:
+    - "Subreddit metadata tool"
+    - "User profile lookup tool"
+
+risk:
+  level: "low"
+  items:
+    - "Reddit OAuth token expiry mid-run — mitigated by token refresh on 401"
+    - "Reddit API changes breaking response schema — isolated in single parser module"
+
+quality:
+  testCoverage:
+    unit: 0
+    integration: 0
+    e2e: 0
+  techDebt: []
+  quirks: []
+
+pipeline:
+  templateVersion: "1.0.0"
+  featureMode: "greenfield"
+  domainKnowledgePath: "plan"
+
+metadata:
+  createdAt: "2026-04-22T00:00:00Z"
+  updatedAt: "2026-04-22T00:00:00Z"
+  createdBy: "agent"
+  lastModifiedBy: "agent"
+  skill: "planifest-spec-agent"
+  tool: "claude-code"
+  model: "claude-sonnet-4-5"

@@ -1,0 +1,102 @@
+id: "obs"
+name: "ALS Observability"
+feature: "0000001-autonomous-local-swarm"
+version: "0.1.0"
+status: "planned"
+type: "microservice"
+domain: "swarm"
+summary: "Go package that owns obs.db (DuckDB) and writes all swarm events as an append-only log, mirrored to stdout via log/slog."
+systemContext: "Called by the orchestrator on every task state transition and significant event. Provides the operator's only persistent view of swarm activity beyond querying swarm.db directly."
+
+responsibilities:
+  - "Write every task state transition to obs.db as an append-only event row"
+  - "Write supplementary events: VRAM swap, cascading prune, self-correction, context compression, MCP tool call, output deposit"
+  - "Mirror every event to stdout via log/slog in structured text format"
+  - "Ensure credentials never appear in any event row or log line"
+  - "Handle DuckDB write failures gracefully without crashing the orchestrator"
+
+exceptions:
+  - "Does not own swarm.db — that is the orchestrator's responsibility"
+  - "Does not expose a query API — operator queries obs.db directly via DuckDB CLI"
+  - "Does not rotate or archive obs.db — operator responsibility"
+  - "Does not send alerts or notifications"
+
+stack:
+  language: "go"
+  runtime: "go"
+  framework: "none"
+  frontend: "none"
+  styling: "none"
+  componentLibrary: "none"
+  database: "duckdb"
+  orm: "none"
+  testing: "go-test"
+  iac: "none"
+  cloud: "none"
+  compute: "none"
+  ci: "none"
+
+contract:
+  apiSpec: "none"
+  inputs:
+    - name: "WriteEvent"
+      type: "go-function"
+      description: "Called by orchestrator with event type, task context, and detail payload"
+  outputs:
+    - name: "obs.db"
+      type: "duckdb"
+      description: "Append-only event log queryable by operator"
+    - name: "stdout"
+      type: "log/slog"
+      description: "Structured text mirror of all events"
+  consumedBy: []
+  consumes: []
+  breakingChangePolicy: "requires-human-approval"
+
+data:
+  ownsData: true
+  dataContract: "src/obs/docs/data-contract.md"
+  tables:
+    - "events"
+  schemaVersion: "0.1.0"
+  migrationPath: "src/obs/docs/migrations/"
+
+scope:
+  inScope:
+    - "DuckDB event log"
+    - "stdout mirror via log/slog"
+    - "Credential scrubbing before write"
+    - "Graceful failure handling"
+  outOfScope:
+    - "Application state storage (owned by orchestrator)"
+    - "Query API or dashboard"
+    - "Log rotation or archival"
+  deferred: []
+
+risk:
+  level: "low"
+  items:
+    - "DuckDB write performance under high event volume (mitigated by columnar append efficiency)"
+    - "Credential leak if scrubber has gaps in coverage"
+
+quality:
+  testCoverage:
+    unit: 0
+    integration: 0
+    e2e: 0
+  techDebt: []
+  quirks: []
+
+pipeline:
+  templateVersion: "1.0.0"
+  featureMode: "greenfield"
+  domainKnowledgePath: "plan"
+
+metadata:
+  createdAt: "2026-04-22T00:00:00Z"
+  updatedAt: "2026-04-22T00:00:00Z"
+  createdBy: "agent"
+  lastModifiedBy: "agent"
+  skill: "planifest-spec-agent"
+  tool: "claude-code"
+  model: "claude-sonnet-4-5"

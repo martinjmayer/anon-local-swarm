@@ -1,0 +1,120 @@
+id: "orchestrator"
+name: "ALS Orchestrator"
+feature: "0000001-autonomous-local-swarm"
+version: "0.1.0"
+status: "planned"
+type: "microservice"
+domain: "swarm"
+summary: "Main Go binary that runs the DAG scheduler, routes tasks to Ollama models, manages VRAM, and coordinates all swarm activity."
+systemContext: "The single executable entry point for the ALS. Owns swarm.db, drives the full task lifecycle, and delegates inference to Ollama and tool calls to MCP servers. Started by the operator; runs until all tasks reach terminal state."
+
+responsibilities:
+  - "Poll swarm.db every 2 seconds for unblocked pending tasks"
+  - "Route tasks to the correct Ollama model via the semantic router"
+  - "Enforce VRAM constraints via sticky model strategy and keep_alive: 0"
+  - "Run variational execution and judge selection for eligible tasks"
+  - "Trigger cascading prune when VIABILITY_REVIEW score < 5"
+  - "Run go build validation and emit self-correction tasks on failure"
+  - "Emit SUMMARY tasks when branch context exceeds 70% threshold"
+  - "Register and call MCP tool servers via embedded MCP client"
+  - "Deposit output artifacts to the project directory on terminal state"
+  - "Write all state transitions to obs component"
+
+exceptions:
+  - "Does not own obs.db — that is the obs component's responsibility"
+  - "Does not dispatch email or sync to Dropbox"
+  - "Does not expose an HTTP API to external systems"
+  - "Does not manage Ollama model pulling — operator responsibility"
+  - "Does not implement MCP server protocol — only MCP client"
+
+stack:
+  language: "go"
+  runtime: "go"
+  framework: "none"
+  frontend: "none"
+  styling: "none"
+  componentLibrary: "none"
+  database: "sqlite"
+  orm: "none"
+  testing: "go-test"
+  iac: "none"
+  cloud: "none"
+  compute: "none"
+  ci: "none"
+
+contract:
+  apiSpec: "none"
+  inputs:
+    - name: "swarm.db seed task"
+      type: "sqlite"
+      description: "Operator inserts a DECOMPOSE task into swarm.db to start a project run"
+  outputs:
+    - name: "project output directory"
+      type: "filesystem"
+      description: "Artifacts deposited to configured output directory on terminal state"
+    - name: "obs events"
+      type: "duckdb"
+      description: "All state transitions written to obs.db via obs component"
+  consumedBy: []
+  consumes:
+    - "obs"
+    - "mcp-reddit"
+  breakingChangePolicy: "requires-human-approval"
+
+data:
+  ownsData: true
+  dataContract: "src/orchestrator/docs/data-contract.md"
+  tables:
+    - "projects"
+    - "tasks"
+    - "task_candidates"
+  schemaVersion: "0.1.0"
+  migrationPath: "src/orchestrator/docs/migrations/"
+
+scope:
+  inScope:
+    - "DAG scheduler with blocked_by resolution"
+    - "Semantic router and Ollama HTTP client"
+    - "Variational execution engine"
+    - "Cascading prune logic"
+    - "Self-correction loop"
+    - "Context sidecar management and SUMMARY emission"
+    - "MCP client with 10 server registrations"
+    - "Output artifact deposit"
+  outOfScope:
+    - "Observability storage (owned by obs)"
+    - "Reddit API access (owned by mcp-reddit)"
+    - "External dispatch (email, Dropbox)"
+  deferred:
+    - "Formal job brief schema validation"
+    - "Playwright and Docker MCP server registration"
+
+risk:
+  level: "medium"
+  items:
+    - "SLM output quality — malformed JSON from 3-7B models"
+    - "VRAM OOM if keep_alive not honoured by Ollama"
+    - "SQLite write contention during cascading prune"
+    - "Operator fails to pre-pull models before run"
+
+quality:
+  testCoverage:
+    unit: 0
+    integration: 0
+    e2e: 0
+  techDebt: []
+  quirks: []
+
+pipeline:
+  templateVersion: "1.0.0"
+  featureMode: "greenfield"
+  domainKnowledgePath: "plan"
+
+metadata:
+  createdAt: "2026-04-22T00:00:00Z"
+  updatedAt: "2026-04-22T00:00:00Z"
+  createdBy: "agent"
+  lastModifiedBy: "agent"
+  skill: "planifest-spec-agent"
+  tool: "claude-code"
+  model: "claude-sonnet-4-5"
