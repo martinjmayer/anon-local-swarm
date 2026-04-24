@@ -1,0 +1,118 @@
+# Autonomous Local Swarm — Configuration
+# Copy this file to your working directory or pass -config <path> to swarm.
+
+# ── Database paths ────────────────────────────────────────────────────────────
+db_path: "swarm.db"
+obs_db_path: "obs.db"
+
+# ── Ollama ────────────────────────────────────────────────────────────────────
+ollama_base_url: "http://localhost:11434"
+
+# ── Swarm parameters ─────────────────────────────────────────────────────────
+context_threshold: 0.70        # Fraction of model context window; triggers SUMMARY task
+viability_threshold: 5.0       # Min VIABILITY_REVIEW score (0–10); below triggers prune
+variation_count: 3             # Candidates per variational execution run
+max_depth: 5                   # Max DAG task depth; tasks beyond this are pruned
+max_self_corrections: 5        # Max go build retries per GO_CODE branch
+scheduler_poll_interval_ms: 2000  # DAG poll interval (ms); REQ-002: ≤ 2000
+
+# ── Skills ───────────────────────────────────────────────────────────────────
+skills_dir: "skills"
+
+# ── Default output directory ─────────────────────────────────────────────────
+output_dir: "output"
+
+# ── Model routing ─────────────────────────────────────────────────────────────
+# ADR-001, ADR-010: sticky model + keep_alive:0 enforced in Ollama client.
+# Change tags here to remap task types to different models without recompilation.
+model_routing:
+  DECOMPOSE:
+    tag: "phi-4:mini"
+    context_window: 4096
+  RESEARCH:
+    tag: "llama3.1:8b"
+    context_window: 8192
+  GO_CODE:
+    tag: "qwen2.5-coder:7b"
+    context_window: 8192
+  VIABILITY_REVIEW:
+    tag: "phi-4:mini"
+    context_window: 4096
+  SUMMARY:
+    tag: "smollm3:135m"
+    context_window: 2048
+
+# ── MCP servers ───────────────────────────────────────────────────────────────
+# REQ-009: Credentials read from environment variables only — never hardcoded.
+# If a server fails to register, the orchestrator continues with degraded tools.
+mcp_servers:
+  - name: "brave-search"
+    command: "npx"
+    args: ["-y", "@brave/brave-search-mcp"]
+    env:
+      BRAVE_API_KEY: "${BRAVE_API_KEY}"
+    task_types: ["RESEARCH"]
+
+  - name: "github"
+    command: "npx"
+    args: ["-y", "@modelcontextprotocol/server-github"]
+    env:
+      GITHUB_TOKEN: "${GITHUB_TOKEN}"
+    task_types: ["RESEARCH", "GO_CODE"]
+
+  - name: "context-mode"
+    command: "npx"
+    args: ["-y", "@mksglu/context-mode"]
+    env: {}
+    task_types: []  # available to all task types
+
+  - name: "fetch"
+    command: "npx"
+    args: ["-y", "@modelcontextprotocol/server-fetch"]
+    env: {}
+    task_types: ["RESEARCH", "GO_CODE"]
+
+  - name: "wikipedia"
+    command: "npx"
+    args: ["-y", "@modelcontextprotocol/server-wikipedia"]
+    env: {}
+    task_types: ["DECOMPOSE", "RESEARCH"]
+
+  - name: "hackernews"
+    command: "npx"
+    args: ["-y", "@modelcontextprotocol/server-hackernews"]
+    env: {}
+    task_types: ["RESEARCH", "VIABILITY_REVIEW"]
+
+  - name: "mcp-reddit"
+    command: "node"
+    args: ["src/mcp-reddit/dist/index.js"]
+    env:
+      REDDIT_CLIENT_ID: "${REDDIT_CLIENT_ID}"
+      REDDIT_CLIENT_SECRET: "${REDDIT_CLIENT_SECRET}"
+    task_types: ["RESEARCH"]
+
+  - name: "arxiv"
+    command: "npx"
+    args: ["-y", "@modelcontextprotocol/server-arxiv"]
+    env: {}
+    task_types: ["RESEARCH"]
+
+  - name: "youtube-transcript"
+    command: "npx"
+    args: ["-y", "@modelcontextprotocol/server-youtube-transcript"]
+    env: {}
+    task_types: ["RESEARCH"]
+
+  - name: "memory"
+    command: "npx"
+    args: ["-y", "@modelcontextprotocol/server-memory"]
+    env: {}
+    task_types: []  # available to all task types
+
+  - name: "obsidian"
+    command: "npx"
+    args: ["-y", "mcp-obsidian"]
+    env:
+      OBSIDIAN_API_KEY: "${OBSIDIAN_API_KEY}"
+    task_types: ["DECOMPOSE", "RESEARCH", "VIABILITY_REVIEW"]

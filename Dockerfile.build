@@ -1,0 +1,41 @@
+# Dockerfile.build — multi-stage build environment for the ALS orchestrator.
+#
+# This image provides Go + CGO (via MinGW) and builds the swarm binary.
+# It is NOT a runtime image — the ALS runs as a local process, not in a container.
+#
+# Usage:
+#   docker build -f Dockerfile.build -t als-build .
+#   docker run --rm -v "$PWD/bin:/out" als-build
+#
+# The compiled binary is written to /out/swarm (or bin/swarm on the host).
+#
+# Why Docker for the build only:
+#   - Go is not required on the host.
+#   - go-duckdb requires CGO + GCC; this image bundles both cleanly.
+#   - The runtime remains a plain local process: ./bin/swarm -config config.yaml
+
+FROM golang:1.23-bullseye AS builder
+
+# Install GCC (required by go-duckdb CGO bindings).
+RUN apt-get update && apt-get install -y --no-install-recommends gcc libc-dev && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /src
+
+# Copy go workspace files first for layer caching.
+COPY go.work go.work.sum* ./
+COPY src/obs/go.mod src/obs/go.sum* ./src/obs/
+COPY src/orchestrator/go.mod src/orchestrator/go.sum* ./src/orchestrator/
+
+# Download dependencies.
+RUN cd src/obs && go mod download
+RUN cd src/orchestrator && go mod download
+
+# Copy full source.
+COPY src/ ./src/
+
+# Build the orchestrator binary with CGO enabled.
+RUN CGO_ENABLED=1 GOOS=linux go build -C src/orchestrator -o /out/swarm ./cmd/swarm
+
+# ── Output stage ──────────────────────────────────────────────────────────────
+FROM scratch AS export
+COPY --from=builder /out/swarm /swarm

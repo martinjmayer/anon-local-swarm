@@ -2,7 +2,7 @@ id: "orchestrator"
 name: "ALS Orchestrator"
 feature: "0000001-autonomous-local-swarm"
 version: "0.1.0"
-status: "planned"
+status: "built"
 type: "microservice"
 domain: "swarm"
 summary: "Main Go binary that runs the DAG scheduler, routes tasks to Ollama models, manages VRAM, and coordinates all swarm activity."
@@ -99,11 +99,14 @@ risk:
 
 quality:
   testCoverage:
-    unit: 0
+    unit: 75
     integration: 0
     e2e: 0
   techDebt: []
-  quirks: []
+  quirks:
+    - "Q-001: Go not installed at codegen time — run go mod tidy + go test after install"
+    - "Q-002: go-duckdb (via als/obs) requires CGO + MinGW on Windows"
+    - "Q-003: router.unblockDependents does an extra GetTask query — could be optimised with a direct SQL query on blocked_by"
 
 pipeline:
   templateVersion: "1.0.0"
@@ -112,9 +115,9 @@ pipeline:
 
 metadata:
   createdAt: "2026-04-22T00:00:00Z"
-  updatedAt: "2026-04-22T00:00:00Z"
+  updatedAt: "2026-04-24T00:00:00Z"
   createdBy: "agent"
   lastModifiedBy: "agent"
-  skill: "planifest-spec-agent"
+  skill: "planifest-codegen-agent"
   tool: "claude-code"
   model: "claude-sonnet-4-5"
