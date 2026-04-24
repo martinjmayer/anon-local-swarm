@@ -116,8 +116,8 @@ func Defaults() Config {
 }
 
 // Load reads config.yaml from path, overlays it onto Defaults(), resolves
-// environment variable references in MCPServer.Env values, and validates the
-// result.
+// environment variable references in MCPServer.Env values, applies env
+// overrides (e.g. OLLAMA_BASE_URL), and validates the result.
 func Load(path string) (*Config, error) {
 	cfg := Defaults()
 
@@ -128,6 +128,12 @@ func Load(path string) (*Config, error) {
 
 	if err := yaml.Unmarshal(data, &cfg); err != nil {
 		return nil, fmt.Errorf("config: parse %q: %w", path, err)
+	}
+
+	// Allow OLLAMA_BASE_URL env var to override config — used when running in
+	// Docker where Ollama is on the host at host.docker.internal.
+	if url := os.Getenv("OLLAMA_BASE_URL"); url != "" {
+		cfg.OllamaBaseURL = url
 	}
 
 	resolveEnvRefs(&cfg)

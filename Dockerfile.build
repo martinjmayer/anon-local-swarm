@@ -1,41 +1,59 @@
-# Dockerfile.build — multi-stage build environment for the ALS orchestrator.
+# Dockerfile.build — builds and tests the swarm binary inside a Go+CGO environment.
 #
-# This image provides Go + CGO (via MinGW) and builds the swarm binary.
-# It is NOT a runtime image — the ALS runs as a local process, not in a container.
+# Use this when Go is not installed on the host (e.g. Windows without Go).
+# go-duckdb requires CGO + GCC; both are bundled here.
 #
-# Usage:
-#   docker build -f Dockerfile.build -t als-build .
-#   docker run --rm -v "$PWD/bin:/out" als-build
+# Build + test + extract binary:
 #
-# The compiled binary is written to /out/swarm (or bin/swarm on the host).
+#   docker build -f Dockerfile.build --output bin .
 #
-# Why Docker for the build only:
-#   - Go is not required on the host.
-#   - go-duckdb requires CGO + GCC; this image bundles both cleanly.
-#   - The runtime remains a plain local process: ./bin/swarm -config config.yaml
+# This runs `go test ./...` across all modules before producing the binary.
+# The build fails and produces nothing if any test fails.
+#
+# Then run with the runtime image:
+#
+#   docker compose up
+#
+# NOTE: produces a Linux/amd64 binary. Run it in Docker (see Dockerfile) or WSL2.
 
-FROM golang:1.23-bullseye AS builder
+# ── Stage 1: dependency cache ─────────────────────────────────────────────────
+FROM golang:1.23-bullseye AS deps
 
-# Install GCC (required by go-duckdb CGO bindings).
-RUN apt-get update && apt-get install -y --no-install-recommends gcc libc-dev && rm -rf /var/lib/apt/lists/*
+# GCC is required by go-duckdb CGO bindings.
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends gcc libc-dev \
+ && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /src
 
-# Copy go workspace files first for layer caching.
-COPY go.work go.work.sum* ./
-COPY src/obs/go.mod src/obs/go.sum* ./src/obs/
-COPY src/orchestrator/go.mod src/orchestrator/go.sum* ./src/orchestrator/
+# Copy workspace + module files first so dependency downloads are cached
+# separately from source changes.
+COPY go.work ./
+COPY src/obs/go.mod         ./src/obs/
+COPY src/orchestrator/go.mod ./src/orchestrator/
 
-# Download dependencies.
-RUN cd src/obs && go mod download
-RUN cd src/orchestrator && go mod download
+RUN cd src/obs          && go mod download || true
+RUN cd src/orchestrator && go mod download || true
+
+# ── Stage 2: test ─────────────────────────────────────────────────────────────
+FROM deps AS tester
 
 # Copy full source.
-COPY src/ ./src/
+COPY src/obs/         ./src/obs/
+COPY src/orchestrator/ ./src/orchestrator/
 
-# Build the orchestrator binary with CGO enabled.
-RUN CGO_ENABLED=1 GOOS=linux go build -C src/orchestrator -o /out/swarm ./cmd/swarm
+# Run all tests. Build fails here if any test fails.
+# The -count=1 flag disables the test cache so tests always run fresh.
+RUN CGO_ENABLED=1 go test -count=1 -v ./src/obs/... \
+ && CGO_ENABLED=1 go test -count=1 -v ./src/orchestrator/...
 
-# ── Output stage ──────────────────────────────────────────────────────────────
+# ── Stage 3: compile ──────────────────────────────────────────────────────────
+FROM tester AS builder
+
+RUN mkdir -p /out \
+ && CGO_ENABLED=1 GOOS=linux GOARCH=amd64 \
+    go build -C src/orchestrator -o /out/swarm ./cmd/swarm
+
+# ── Stage 4: export binary via: docker build --output bin . ──────────────────
 FROM scratch AS export
 COPY --from=builder /out/swarm /swarm

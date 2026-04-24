@@ -1,0 +1,28 @@
+services:
+  swarm:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    # host.docker.internal resolves to the Windows host — used for Ollama.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      # Runtime data — created on first run if absent.
+      - ./swarm.db:/data/swarm.db
+      - ./obs.db:/data/obs.db
+      # Config — edit on host, picked up on next container start.
+      - ./config.yaml:/data/config.yaml:ro
+      # Skills — hot-reloadable if orchestrator is restarted.
+      - ./skills:/data/skills:ro
+      # Output artifacts deposited here by the swarm.
+      - ./output:/data/output
+    environment:
+      # Ollama is on the Windows host, not inside the container.
+      - OLLAMA_BASE_URL=http://host.docker.internal:11434
+      # Credentials — set in .env (never commit .env).
+      - BRAVE_API_KEY=${BRAVE_API_KEY:-}
+      - GITHUB_TOKEN=${GITHUB_TOKEN:-}
+      - REDDIT_CLIENT_ID=${REDDIT_CLIENT_ID:-}
+      - REDDIT_CLIENT_SECRET=${REDDIT_CLIENT_SECRET:-}
+      - OBSIDIAN_API_KEY=${OBSIDIAN_API_KEY:-}
+    restart: "no"  # operator starts manually per run
