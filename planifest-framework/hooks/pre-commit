@@ -1,0 +1,15 @@
+#!/bin/bash
+# Planifest Advisory Pre-Commit
+# Tier 1: Local advisory — warns without blocking atomic commits.
+
+STAGED_FILES=$(git diff --cached --name-only)
+
+if echo "$STAGED_FILES" | grep -q "^src/"; then
+    if ! echo "$STAGED_FILES" | grep -qE "^(plan/|docs/|.*component\.json)"; then
+        echo "⚠️  PLANIFEST ADVISORY: Code modified without documentation."
+        echo "This commit is allowed locally, but your final branch must include"
+        echo "updates to plan/, docs/, or the relevant component.json before pushing."
+    fi
+fi
+
+exit 0 # Always exits 0 to allow the atomic commit

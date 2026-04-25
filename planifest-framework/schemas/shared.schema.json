@@ -1,0 +1,357 @@
+﻿{
+    "$id": "shared",
+    "$comment": "Planifest shared definitions - reusable types referenced by all other schemas.",
+    "$defs": {
+        "risk-summary": {
+            "type": "object",
+            "required": [
+                "level",
+                "items"
+            ],
+            "properties": {
+                "level": {
+                    "type": "string",
+                    "enum": [
+                        "low",
+                        "medium",
+                        "high",
+                        "critical"
+                    ]
+                },
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/risk-item"
+                    }
+                }
+            }
+        },
+        "risk-item": {
+            "type": "object",
+            "required": [
+                "id",
+                "category",
+                "description",
+                "likelihood",
+                "impact",
+                "status"
+            ],
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "category": {
+                    "type": "string",
+                    "enum": [
+                        "technical",
+                        "operational",
+                        "security",
+                        "compliance"
+                    ]
+                },
+                "description": {
+                    "type": "string"
+                },
+                "likelihood": {
+                    "type": "string",
+                    "enum": [
+                        "low",
+                        "medium",
+                        "high"
+                    ]
+                },
+                "impact": {
+                    "type": "string",
+                    "enum": [
+                        "low",
+                        "medium",
+                        "high"
+                    ]
+                },
+                "mitigation": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string",
+                    "enum": [
+                        "open",
+                        "mitigated",
+                        "accepted"
+                    ]
+                }
+            }
+        },
+        "scope-boundaries": {
+            "type": "object",
+            "required": [
+                "in",
+                "out",
+                "deferred"
+            ],
+            "properties": {
+                "in": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "out": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "deferred": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "quirk": {
+            "type": "object",
+            "required": [
+                "id",
+                "description",
+                "raisedBy",
+                "raisedAt",
+                "status"
+            ],
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "workaround": {
+                    "type": "string"
+                },
+                "raisedBy": {
+                    "type": "string",
+                    "enum": [
+                        "human",
+                        "agent"
+                    ]
+                },
+                "raisedAt": {
+                    "type": "string",
+                    "format": "date-time"
+                },
+                "status": {
+                    "type": "string",
+                    "enum": [
+                        "open",
+                        "resolved",
+                        "accepted"
+                    ]
+                }
+            }
+        },
+        "component-purpose": {
+            "type": "object",
+            "required": [
+                "summary",
+                "systemContext",
+                "type",
+                "domain",
+                "responsibilities",
+                "notResponsibleFor"
+            ],
+            "properties": {
+                "summary": {
+                    "type": "string",
+                    "description": "One-liner: what this component exists to do"
+                },
+                "systemContext": {
+                    "type": "string",
+                    "description": "Where it sits in the wider system"
+                },
+                "type": {
+                    "type": "string",
+                    "enum": [
+                        "microservice",
+                        "microfrontend",
+                        "component-pack"
+                    ]
+                },
+                "domain": {
+                    "type": "string"
+                },
+                "responsibilities": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "notResponsibleFor": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "Explicit exclusions - equally important"
+                }
+            }
+        },
+        "interface-contract": {
+            "type": "object",
+            "required": [
+                "inputs",
+                "outputs",
+                "schema",
+                "consumedBy",
+                "consumes",
+                "breakingChangePolicy"
+            ],
+            "properties": {
+                "inputs": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/contract-endpoint"
+                    }
+                },
+                "outputs": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/contract-endpoint"
+                    }
+                },
+                "schema": {
+                    "type": "string",
+                    "description": "Reference to OpenAPI spec or schema path"
+                },
+                "consumedBy": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "consumes": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "breakingChangePolicy": {
+                    "type": "string"
+                }
+            }
+        },
+        "contract-endpoint": {
+            "type": "object",
+            "required": [
+                "name",
+                "type",
+                "description"
+            ],
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string",
+                    "enum": [
+                        "http",
+                        "grpc",
+                        "event",
+                        "queue"
+                    ]
+                },
+                "description": {
+                    "type": "string"
+                }
+            }
+        },
+        "adr-content": {
+            "type": "object",
+            "required": [
+                "context",
+                "decision",
+                "status",
+                "consequences"
+            ],
+            "properties": {
+                "context": {
+                    "type": "string"
+                },
+                "decision": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string",
+                    "enum": [
+                        "proposed",
+                        "accepted",
+                        "deprecated",
+                        "superseded"
+                    ]
+                },
+                "consequences": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "supersedes": {
+                    "type": "string"
+                },
+                "supersededBy": {
+                    "type": "string"
+                }
+            }
+        },
+        "component-registry-entry": {
+            "type": "object",
+            "required": [
+                "id",
+                "name",
+                "type",
+                "summary",
+                "feature",
+                "status",
+                "risk"
+            ],
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string",
+                    "enum": [
+                        "microservice",
+                        "microfrontend",
+                        "component-pack"
+                    ]
+                },
+                "summary": {
+                    "type": "string"
+                },
+                "feature": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string",
+                    "enum": [
+                        "planned",
+                        "active",
+                        "deprecated"
+                    ]
+                },
+                "risk": {
+                    "type": "string",
+                    "enum": [
+                        "low",
+                        "medium",
+                        "high",
+                        "critical"
+                    ]
+                }
+            }
+        }
+    }
+}
+

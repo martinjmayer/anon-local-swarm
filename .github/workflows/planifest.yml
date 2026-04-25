@@ -1,0 +1,42 @@
+name: Planifest Strict Pipeline
+
+on:
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  validate-branch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate Code/Doc Parity
+        run: |
+          CHANGED_FILES=$(git diff --name-only origin/${{ github.base_ref }}...HEAD)
+          COMMIT_MESSAGES=$(git log origin/${{ github.base_ref }}...HEAD --format="%s")
+
+          # Fast Path exemption: if all commits are fix(fast-path): only require component.yml or changelog
+          FAST_PATH_COUNT=$(echo "$COMMIT_MESSAGES" | grep -cE "^fix\(fast-path\):" || true)
+          TOTAL_COUNT=$(echo "$COMMIT_MESSAGES" | grep -c "." || true)
+
+          if [ "$FAST_PATH_COUNT" -gt 0 ] && [ "$FAST_PATH_COUNT" -eq "$TOTAL_COUNT" ]; then
+            if echo "$CHANGED_FILES" | grep -q "^src/"; then
+              if ! echo "$CHANGED_FILES" | grep -qE "(component\.json|plan/changelog/)"; then
+                echo "::error title=Planifest Fast Path Violation::Fast Path commits must update component.yml or plan/changelog/."
+                exit 1
+              fi
+            fi
+            echo "✅ Planifest fast-path pipeline passed."
+            exit 0
+          fi
+
+          # Standard check
+          if echo "$CHANGED_FILES" | grep -q "^src/"; then
+            if ! echo "$CHANGED_FILES" | grep -qE "^(plan/|docs/|.*component\.json)"; then
+              echo "::error title=Planifest Strict Violation::Code modified without corresponding updates to plan/, docs/, or component.yml."
+              exit 1
+            fi
+          fi
+          echo "✅ Planifest pipeline passed."

@@ -190,7 +190,7 @@ func TestOpen_req011_SeparateDatabase(t *testing.T) {
 	l.WriteEvent(obs.Event{Type: obs.EventOrchestratorStart})
 
 	// swarm.db must not exist — obs must never create it.
-	if _, statErr := openTestDB(t, swarmPath).QueryRow(`SELECT 1`).Scan(new(int)); statErr == nil {
+	if statErr := openTestDB(t, swarmPath).QueryRow(`SELECT 1`).Scan(new(int)); statErr == nil {
 		// If swarm.db opened without error it was somehow created — that's a bug.
 		// In practice this just checks the obs package doesn't create a second file.
 	}

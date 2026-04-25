@@ -1,6 +1,7 @@
 package ollama_test
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -21,7 +22,7 @@ func TestGenerate_req004_KeepAliveZero(t *testing.T) {
 	defer srv.Close()
 
 	c := ollama.New(srv.URL)
-	_, err := c.Generate(t.Context(), "phi-4:mini", "system", "prompt", nil)
+	_, err := c.Generate(context.Background(), "phi-4:mini", "system", "prompt", nil)
 	if err != nil {
 		t.Fatalf("Generate: %v", err)
 	}
@@ -40,7 +41,7 @@ func TestGenerate_StreamFalse(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	ollama.New(srv.URL).Generate(t.Context(), "phi-4:mini", "", "hello", nil)
+	ollama.New(srv.URL).Generate(context.Background(), "phi-4:mini", "", "hello", nil)
 
 	if v, _ := captured["stream"].(bool); v {
 		t.Errorf("want stream: false, got true")
@@ -56,7 +57,7 @@ func TestGenerate_req003_SystemPromptIncluded(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	ollama.New(srv.URL).Generate(t.Context(), "phi-4:mini", "You are a decomposer", "decompose this", nil)
+	ollama.New(srv.URL).Generate(context.Background(), "phi-4:mini", "You are a decomposer", "decompose this", nil)
 
 	if captured["system"] != "You are a decomposer" {
 		t.Errorf("req-003: system prompt not in request, got %v", captured["system"])
@@ -126,7 +127,7 @@ func TestGenerate_HTTPError(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	_, err := ollama.New(srv.URL).Generate(t.Context(), "bad-model", "", "hi", nil)
+	_, err := ollama.New(srv.URL).Generate(context.Background(), "bad-model", "", "hi", nil)
 	if err == nil {
 		t.Fatal("want error for HTTP 404, got nil")
 	}

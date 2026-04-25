@@ -28,8 +28,18 @@ func Write(outputDir string, artifacts []Artifact) error {
 		return fmt.Errorf("deposit: mkdir %q: %w", outputDir, err)
 	}
 
+	// Resolve outputDir to an absolute path so the prefix check is reliable.
+	absBase, err := filepath.Abs(outputDir)
+	if err != nil {
+		return fmt.Errorf("deposit: resolve output dir: %w", err)
+	}
+
 	for _, a := range artifacts {
-		path := filepath.Join(outputDir, a.Filename)
+		path := filepath.Join(absBase, filepath.Clean(a.Filename))
+		// Guard against path traversal: reject filenames that escape outputDir.
+		if !strings.HasPrefix(path, absBase+string(filepath.Separator)) {
+			return fmt.Errorf("deposit: unsafe filename %q escapes output directory", a.Filename)
+		}
 		if err := os.WriteFile(path, []byte(a.Content), 0644); err != nil {
 			return fmt.Errorf("deposit: write %q: %w", path, err)
 		}

@@ -80,15 +80,14 @@ func TestScheduler_req002_PrunesExceedingMaxDepth(t *testing.T) {
 
 	d.InsertProject(ctx, "proj-depth", "D", nil)
 
-	// Insert task with depth 6 (> max 5). SQLite CHECK allows depth 0-5,
-	// so we insert with depth 5 and manually update to 6 via raw SQL.
+	// Insert task with depth 5. maxDepth is set to 4 below so depth=5 > maxDepth=4
+	// triggers the prune path. (SQLite CHECK constrains depth to 0-5, so we
+	// cannot store depth=6; using maxDepth=4 exercises the same code path.)
 	d.InsertTask(ctx, &db.Task{
 		ID: "deep-task", ProjectID: "proj-depth",
 		Type: "GO_CODE", ModelTag: "qwen2.5-coder:7b",
 		Payload: "x", Status: "pending", Depth: 5,
 	})
-	// Bypass the CHECK constraint for this test by using raw SQL.
-	d.SQL().Exec(`UPDATE tasks SET depth = 6 WHERE id = 'deep-task'`)
 
 	var dispatchCount atomic.Int32
 	dispatch := func(ctx context.Context, task *db.Task) error {
@@ -96,7 +95,7 @@ func TestScheduler_req002_PrunesExceedingMaxDepth(t *testing.T) {
 		return nil
 	}
 
-	s := scheduler.New(d, obsLog, dispatch, 50*time.Millisecond, 5)
+	s := scheduler.New(d, obsLog, dispatch, 50*time.Millisecond, 4)
 	go s.Run(ctx)
 	time.Sleep(300 * time.Millisecond)
 	cancel()

@@ -1,0 +1,6 @@
+﻿
+# Planifest - Indexing Exclusions (files accessible via @ mention but excluded from search)
+*-evaluation.md
+*-guide.md
+tool-setup-reference.md
+getting-started.md

@@ -1,0 +1,11 @@
+# Planifest — Line ending rules
+#
+# Shell hook scripts MUST use LF endings to be executable by bash on all platforms.
+# Git for Windows would otherwise write CRLF, which breaks the shebang line.
+#
+# Add this file to the root of any repo that uses planifest-framework/hooks/.
+
+planifest-framework/hooks/pre-commit  text eol=lf
+planifest-framework/hooks/pre-push    text eol=lf
+planifest-framework/hooks/commit-msg  text eol=lf
+planifest-framework/scripts/skill-sync.sh text eol=lf

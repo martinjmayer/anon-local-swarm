@@ -1,6 +1,7 @@
 package validator_test
 
 import (
+	"context"
 	"os/exec"
 	"testing"
 
@@ -59,7 +60,7 @@ func TestValidate_req007_ValidCode(t *testing.T) {
 	if _, err := exec.LookPath("go"); err != nil {
 		t.Skip("go not on PATH — skipping build validation test")
 	}
-	result, err := validator.Validate(t.Context(), `package main
+	result, err := validator.Validate(context.Background(), `package main
 
 import "fmt"
 
@@ -80,7 +81,7 @@ func TestValidate_req007_InvalidCode(t *testing.T) {
 	if _, err := exec.LookPath("go"); err != nil {
 		t.Skip("go not on PATH")
 	}
-	result, err := validator.Validate(t.Context(), `package main
+	result, err := validator.Validate(context.Background(), `package main
 
 func main() {
 	undefined_function()

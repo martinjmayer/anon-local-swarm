@@ -1,0 +1,15 @@
+# Agent tool config
+.claude/
+.cursor/
+.agents/
+.agent/
+.gemini/
+.github/skills/
+.windsurf/
+.clinerules/
+CLAUDE.md
+AGENTS.md
+GEMINI.md
+
+# External skills — plan-scoped (ephemeral, re-fetchable from manifest)
+plan/current/external-skills/

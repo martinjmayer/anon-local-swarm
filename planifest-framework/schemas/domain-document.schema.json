@@ -1,0 +1,108 @@
+﻿{
+    "$id": "domain-document",
+    "$comment": "Planifest Domain Document envelope - every document in the knowledge store conforms to this shape. Content varies by document type; the envelope is always the same.",
+    "type": "object",
+    "required": [
+        "id",
+        "type",
+        "scope",
+        "feature",
+        "version",
+        "createdAt",
+        "updatedAt",
+        "author",
+        "status",
+        "content",
+        "risk",
+        "scope_boundaries"
+    ],
+    "properties": {
+        "id": {
+            "type": "string",
+            "description": "Unique document identifier, e.g. 'feature:auth-service:design-spec'"
+        },
+        "type": {
+            "type": "string",
+            "enum": [
+                "feature-brief",
+                "design-spec",
+                "openapi-spec",
+                "adr",
+                "security-report",
+                "risk-register",
+                "scope",
+                "quirks",
+                "recommendations",
+                "operational-model",
+                "slo-definitions",
+                "cost-model",
+                "domain-glossary",
+                "component-purpose",
+                "interface-contract",
+                "dependency-map",
+                "test-coverage",
+                "tech-debt",
+                "component-registry",
+                "dependency-graph"
+            ]
+        },
+        "scope": {
+            "type": "string",
+            "enum": [
+                "feature",
+                "component",
+                "system"
+            ]
+        },
+        "feature": {
+            "type": "string"
+        },
+        "component": {
+            "type": "string"
+        },
+        "version": {
+            "type": "string",
+            "description": "Semver"
+        },
+        "createdAt": {
+            "type": "string",
+            "format": "date-time"
+        },
+        "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+        },
+        "author": {
+            "type": "string",
+            "enum": [
+                "human",
+                "agent"
+            ]
+        },
+        "status": {
+            "type": "string",
+            "enum": [
+                "draft",
+                "active",
+                "superseded",
+                "archived"
+            ]
+        },
+        "content": {
+            "description": "Document content - shape varies by document type"
+        },
+        "risk": {
+            "$ref": "shared.schema.json#/$defs/risk-summary"
+        },
+        "scope_boundaries": {
+            "$ref": "shared.schema.json#/$defs/scope-boundaries"
+        },
+        "quirks": {
+            "type": "array",
+            "items": {
+                "$ref": "shared.schema.json#/$defs/quirk"
+            }
+        }
+    }
+}
+

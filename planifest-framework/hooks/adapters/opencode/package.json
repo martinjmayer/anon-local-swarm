@@ -1,0 +1,12 @@
+{
+  "name": "@planifest/opencode-hooks",
+  "version": "0.1.0",
+  "description": "Planifest enforcement hooks for OpenCode — Tier 2 plugin shim.",
+  "type": "module",
+  "main": "index.ts",
+  "scripts": {
+    "build": "bun build index.ts --outfile dist/index.js"
+  },
+  "keywords": ["planifest", "opencode", "hooks", "enforcement"],
+  "license": "MIT"
+}

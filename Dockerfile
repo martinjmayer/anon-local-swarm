@@ -61,6 +61,11 @@ COPY --from=builder /out/swarm /usr/local/bin/swarm
 COPY --from=mcp-builder /mcp/dist /app/src/mcp-reddit/dist
 COPY --from=mcp-builder /mcp/node_modules /app/src/mcp-reddit/node_modules
 
+# Run as non-root to avoid volume files being owned by root on the host.
+RUN adduser --disabled-password --no-create-home --gecos "" swarm \
+ && mkdir -p /data && chown swarm:swarm /data
+USER swarm
+
 # Working directory is /data — all runtime files (db, config, skills, output)
 # are mounted here by docker-compose.
 WORKDIR /data
